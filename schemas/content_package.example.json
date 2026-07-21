@@ -1,0 +1,81 @@
+{
+  "package_id": "00000000-0000-0000-0000-000000000001",
+  "created_at": "2026-07-21T00:00:00+00:00",
+  "channel_niche": "ilginc-tarih",
+  "channel_niche_label": "İlginç Tarih",
+  "channel_name": "İlginç Tarih Shorts",
+  "status": "ready",
+  "topic": {
+    "topic": "Osmanlı'nın hiç kaybedilmediği söylenen tek kale",
+    "angle": "Az bilinen savunma taktiği ve neden düştüğü",
+    "target_audience": "18-40, tarih meraklısı Türk izleyici",
+    "estimated_interest": 8,
+    "search_keywords": ["Osmanlı kale", "tarih shorts", "Osmanlı savunma"],
+    "why_now": "Evergreen merak konusu; kısa hikâye formatına uygun",
+    "risk_level": "low",
+    "risk_note": null
+  },
+  "content_plan": {
+    "topic": "Osmanlı'nın hiç kaybedilmediği söylenen tek kale",
+    "format": "shorts",
+    "aspect_ratio": "9:16",
+    "target_duration_sec": 55,
+    "quality_score": 8,
+    "hook": "Bu kale 400 yıl boyunca düşmanı içeri almadı — ta ki tek bir hata olana kadar.",
+    "full_narration": "...",
+    "scenes": [],
+    "cta": "Daha fazla tarih için abone ol.",
+    "music_mood": "epik, gizemli",
+    "thumbnail": {
+      "concept": "Osmanlı kalesi, dramatik gökyüzü",
+      "prompt": "Ottoman fortress cinematic aerial, golden hour, vertical 9:16",
+      "overlay_text": "400 YIL"
+    },
+    "seo": {
+      "title": "Osmanlı'nın Düşmeyen Kale Efsanesi",
+      "description": "...",
+      "tags": ["tarih", "osmanlı", "shorts"],
+      "hashtags": ["#tarih", "#osmanlı", "#shorts"],
+      "category": "Education"
+    },
+    "compliance": {
+      "altered_content_label": false,
+      "risk_notes": "yok"
+    }
+  },
+  "review": {
+    "decision": "APPROVE",
+    "scores": {
+      "originality": 8,
+      "hook_strength": 8,
+      "factual_safety": 8,
+      "retention": 8,
+      "policy_risk": 8,
+      "pacing": 8
+    },
+    "overall": 8.0,
+    "issues": [],
+    "fix_instructions": [],
+    "summary": "Yayına uygun; hook güçlü, politika riski düşük."
+  },
+  "assets": {
+    "video_path": "output/00000000-0000-0000-0000-000000000001/video.mp4",
+    "thumbnail_path": "output/00000000-0000-0000-0000-000000000001/thumbnail.jpg",
+    "voice_path": "output/00000000-0000-0000-0000-000000000001/voice.mp3",
+    "scene_paths": []
+  },
+  "platform_overrides": {
+    "youtube": {
+      "title": "Osmanlı'nın Düşmeyen Kale Efsanesi",
+      "description": "...",
+      "tags": ["tarih", "osmanlı", "shorts"],
+      "category": "Education"
+    },
+    "tiktok": {
+      "caption": "Osmanlı'nın Düşmeyen Kale Efsanesi\n\n#tarih #osmanlı #shorts"
+    },
+    "instagram": {
+      "caption": "Osmanlı'nın Düşmeyen Kale Efsanesi\n\n#tarih #osmanlı #shorts"
+    }
+  }
+}

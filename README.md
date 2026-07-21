@@ -40,7 +40,23 @@ Fill in API keys in `.env` as each step requires them. See `.env.example` for th
 
 ## Configuration
 
-Edit `config/channel.yaml` to set your niche, tone, and format before running production.
+Edit `config/channel.yaml` to change niche, tone, and format **without modifying code**.
+
+Current channel: **İlginç Tarih** (`ilginc-tarih`).
+
+Verify config and prompt rendering:
+
+```powershell
+python scripts/verify_config.py
+```
+
+## Data models
+
+| Module | Purpose |
+|--------|---------|
+| `core/config.py` | Load `channel.yaml`, render agent prompts |
+| `core/schemas.py` | Topic, ContentPlan, ReviewResult, ContentPackage |
+| `schemas/content_package.example.json` | Example final output after a successful run |
 
 ## Workflow
 
