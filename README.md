@@ -17,8 +17,7 @@ Autonomous short-form video production pipeline for YouTube Shorts, designed to 
 2. ✅ Channel config and content package schema
 3. ✅ Gemini agent pipeline (topic → master → reviewer)
 4. ✅ Pexels + Pollinations image fetchers
-4. Pexels + Pollinations image fetchers
-5. edge-tts narration
+5. ✅ edge-tts narration
 6. FFmpeg 9:16 renderer
 7. Thumbnail generator
 8. SQLite topic tracking
@@ -90,6 +89,24 @@ python scripts/fetch_scenes.py --pollinations-only
 ```powershell
 python scripts/fetch_scenes.py --topic "Osmanlı'nın bilinmeyen savaş taktiği"
 ```
+
+## Step 5 — Narration (edge-tts)
+
+Voice is configured in `config/channel.yaml` (`voice.voice`, default `tr-TR-AhmetNeural`).
+
+**Quick test (no API keys):**
+
+```powershell
+python scripts/synthesize_voice.py --text "Osmanlı ordusu bu taktikle tarihe geçti."
+```
+
+**From agent pipeline:**
+
+```powershell
+python scripts/synthesize_voice.py --topic "Osmanlı'nın bilinmeyen savaş taktiği"
+```
+
+Output: `assets/voice.mp3` (duration shown if `ffprobe` is installed).
 
 ## Workflow
 

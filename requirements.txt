@@ -1,3 +1,4 @@
 # Phase 1 dependencies — expanded per step
 pyyaml>=6.0
 google-genai>=1.0.0
+edge-tts>=6.1.0
