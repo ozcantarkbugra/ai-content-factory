@@ -4,12 +4,12 @@ Autonomous short-form video production pipeline for YouTube Shorts, designed to 
 
 ## Architecture
 
-| Directory | Role |
-|-----------|------|
-| `core/` | Production — agents, visuals, TTS, render, database |
+| Directory     | Role                                                  |
+| ------------- | ----------------------------------------------------- |
+| `core/`       | Production — agents, visuals, TTS, render, database   |
 | `publishers/` | Upload adapters — YouTube first, multi-platform later |
-| `prompts/` | LLM system prompts (JSON-only outputs) |
-| `config/` | Channel identity and production settings |
+| `prompts/`    | LLM system prompts (JSON-only outputs)                |
+| `config/`     | Channel identity and production settings              |
 
 ## Phase 1 roadmap
 
@@ -25,7 +25,7 @@ Autonomous short-form video production pipeline for YouTube Shorts, designed to 
 10. ✅ End-to-end `main.py`
 11. ✅ Task Scheduler documentation
 12. ✅ Telegram notifications (optional)
-13. n8n orchestration (Phase 2, optional)
+13. ✅ n8n orchestration (Phase 2, optional)
 
 ## Setup
 
@@ -52,11 +52,11 @@ python scripts/verify_config.py
 
 ## Data models
 
-| Module | Purpose |
-|--------|---------|
-| `core/config.py` | Load `channel.yaml`, render agent prompts |
-| `core/schemas.py` | Topic, ContentPlan, ReviewResult, ContentPackage |
-| `schemas/content_package.example.json` | Example final output after a successful run |
+| Module                                 | Purpose                                          |
+| -------------------------------------- | ------------------------------------------------ |
+| `core/config.py`                       | Load `channel.yaml`, render agent prompts        |
+| `core/schemas.py`                      | Topic, ContentPlan, ReviewResult, ContentPackage |
+| `schemas/content_package.example.json` | Example final output after a successful run      |
 
 ## Step 3 — Gemini agents
 
@@ -299,21 +299,21 @@ Test: right-click the task → **Run**, then open the newest file in `data/logs/
 
 ### Recommended schedule
 
-| Phase | Command | Notes |
-|-------|---------|--------|
-| First test | `run_scheduled.bat --no-upload` | No YouTube upload |
-| Production | `run_scheduled.bat` | **1× daily** → 1 video (`schedule.target_videos_per_day: 1` in `channel.yaml`) |
+| Phase      | Command                         | Notes                                                                          |
+| ---------- | ------------------------------- | ------------------------------------------------------------------------------ |
+| First test | `run_scheduled.bat --no-upload` | No YouTube upload                                                              |
+| Production | `run_scheduled.bat`             | **1× daily** → 1 video (`schedule.target_videos_per_day: 1` in `channel.yaml`) |
 
 Default target is **one video per day** (one scheduled task). To scale later (e.g. 10/day), add more triggers or tasks and update `config/channel.yaml`.
 
 ### Troubleshooting
 
-| Issue | Fix |
-|-------|-----|
-| `python` not found | Install Python or use full path in the batch file |
-| OAuth / token errors | Run while logged in; re-run `python scripts/upload_youtube.py --auth-only` |
-| FFmpeg missing | `winget install Gyan.FFmpeg` or set `FFMPEG_PATH` in `.env` |
-| Task did not run | PC was off; enable “Run as soon as possible after a scheduled start is missed” |
+| Issue                | Fix                                                                            |
+| -------------------- | ------------------------------------------------------------------------------ |
+| `python` not found   | Install Python or use full path in the batch file                              |
+| OAuth / token errors | Run while logged in; re-run `python scripts/upload_youtube.py --auth-only`     |
+| FFmpeg missing       | `winget install Gyan.FFmpeg` or set `FFMPEG_PATH` in `.env`                    |
+| Task did not run     | PC was off; enable “Run as soon as possible after a scheduled start is missed” |
 
 Phase 2 optional orchestration (n8n) can trigger the same batch file over HTTP; production logic stays in Python.
 
@@ -365,6 +365,68 @@ python main.py --no-notify
 ```
 
 If Telegram is not configured, the pipeline runs normally with no errors.
+
+## Step 13 — n8n orchestration (optional)
+
+n8n is **orchestration only** — it triggers the same Python pipeline; it does not render or upload by itself.
+
+```
+n8n → POST http://host.docker.internal:8765/run → trigger_server.py → main.py
+```
+
+Detailed guide: [`n8n/README.md`](n8n/README.md)
+
+### 1. Trigger server
+
+Add to `.env`:
+
+```env
+TRIGGER_HOST=127.0.0.1
+TRIGGER_PORT=8765
+TRIGGER_API_KEY=your-long-random-secret
+```
+
+Start (leave running):
+
+```powershell
+python scripts/trigger_server.py
+```
+
+### 2. n8n (Docker)
+
+Requires [Docker Desktop](https://www.docker.com/products/docker-desktop/).
+
+```powershell
+docker compose up -d
+```
+
+Open http://localhost:5678 → enable **Settings → Instance-level MCP**.
+
+Import workflow via API (paste `N8N_API_KEY` from **Settings → n8n API** into `.env` first):
+
+```powershell
+python scripts/import_n8n_workflow.py
+```
+
+For Cursor MCP access, also set `N8N_MCP_TOKEN` (from **Instance-level MCP → Connection details → Access Token**) and run:
+
+```powershell
+python scripts/setup_cursor_n8n_mcp.py
+```
+
+Restart Cursor after generating `.cursor/mcp.json`.
+
+### 3. Manual HTTP test (no n8n)
+
+```powershell
+Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:8765/run" -Headers @{"X-Trigger-Key"="your-long-random-secret"} -ContentType "application/json" -Body "{}"
+```
+
+Log tail: `GET http://127.0.0.1:8765/status`
+
+### Scheduling note
+
+You already have **Windows Task Scheduler** at 10:00. Do **not** enable both n8n daily trigger and Task Scheduler unless you want two videos per day. Pick one primary scheduler.
 
 ## Workflow
 
