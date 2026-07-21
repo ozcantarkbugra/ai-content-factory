@@ -22,7 +22,7 @@ Autonomous short-form video production pipeline for YouTube Shorts, designed to 
 7. ✅ Thumbnail generator
 8. ✅ SQLite topic tracking
 9. ✅ YouTube publisher (OAuth)
-10. End-to-end `main.py`
+10. ✅ End-to-end `main.py`
 11. Task Scheduler documentation
 12. Telegram notifications (optional)
 13. n8n orchestration (Phase 2, optional)
@@ -229,6 +229,46 @@ python scripts/upload_youtube.py --video output/short.mp4 --privacy public
 ```
 
 Modules: `publishers/base.py` (interface), `publishers/youtube.py` (OAuth + resumable upload + thumbnail).
+
+## Step 10 — End-to-end pipeline (`main.py`)
+
+One command runs the full factory:
+
+```powershell
+python main.py
+```
+
+Pick a topic automatically (Topic Agent + used topics from SQLite), or provide one:
+
+```powershell
+python main.py --topic "Osmanlı'nın bilinmeyen savaş taktiği"
+```
+
+Produce everything locally without YouTube upload:
+
+```powershell
+python main.py --topic "Osmanlı'nın bilinmeyen savaş taktiği" --no-upload
+```
+
+Each successful run writes a package folder:
+
+```
+output/<package_id>/
+  content_package.json
+  video.mp4
+  thumbnail.jpg
+  voice.mp3
+  scenes/scene_01.jpg ...
+```
+
+Upload uses SEO metadata from the content plan (title, description, tags, hashtags). Default privacy: `unlisted` (`config/channel.yaml`).
+
+```powershell
+python main.py --privacy public
+python main.py --skip-thumbnail-upload
+```
+
+Requires `.env`: `GEMINI_API_KEY`, `PEXELS_API_KEY`. YouTube upload also needs `credentials/client_secret.json` + `credentials/token.json`.
 
 ## Workflow
 
