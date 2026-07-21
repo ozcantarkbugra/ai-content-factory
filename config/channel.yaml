@@ -1,0 +1,30 @@
+# Channel identity — update niche before production runs.
+# Placeholders in prompts/ are filled from this file at runtime.
+
+channel:
+  name: "AI Content Factory"
+  niche: "ilginc-gercekler"  # change to your niche slug
+  niche_label: "İlginç Gerçekler"
+  language: "tr-TR"
+  tone: "merak uyandırıcı, güvenilir, abartısız"
+  target_audience: "18-35, Türkiye, meraklı izleyici"
+
+format:
+  type: shorts  # shorts | longform
+  aspect_ratio: "9:16"
+  target_duration_sec: 55
+  scene_duration_sec: 5
+
+voice:
+  provider: edge-tts
+  voice: tr-TR-AhmetNeural  # alternatives: tr-TR-EmelNeural
+
+visuals:
+  stock_provider: pexels
+  ai_provider: pollinations
+  default_visual_type: stock  # stock | ai | mixed
+
+production:
+  reviewer_min_score: 7.0
+  reviewer_max_retries: 2
+  altered_content_default: false

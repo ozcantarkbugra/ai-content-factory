@@ -1,0 +1,32 @@
+# Environment and secrets
+.env
+.env.local
+credentials/
+token.json
+client_secret.json
+*.pem
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+
+# Generated media and runtime data
+assets/*
+!assets/.gitkeep
+output/
+data/*.db
+data/*.sqlite3
+!data/.gitkeep
+
+# IDE and OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db

@@ -1,0 +1,2 @@
+# Phase 1 dependencies — expanded per step
+pyyaml>=6.0

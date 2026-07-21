@@ -1,0 +1,62 @@
+---
+description: AI Content Factory — architecture, workflow, and coding standards
+alwaysApply: true
+---
+
+# AI Content Factory
+
+## Purpose
+
+Autonomous short-form video production for YouTube (Phase 1), with multi-platform publishing planned (TikTok, Instagram Reels). Production is platform-agnostic; upload lives in `publishers/`.
+
+## Architecture
+
+```
+core/          → agents, images, TTS, render, DB (no platform knowledge)
+publishers/    → upload adapters (youtube first, then tiktok, instagram)
+prompts/       → LLM system prompts; outputs must be valid JSON only
+config/        → channel identity (niche, tone, format, duration)
+data/          → SQLite and runtime state
+assets/        → ephemeral scene images, voice, temp files
+output/        → final videos and content packages (gitignored)
+```
+
+## Phase 1 stack
+
+| Layer | Tool |
+|-------|------|
+| LLM | Gemini API |
+| Stock visuals | Pexels API |
+| AI visuals | Pollinations (HTTP) |
+| Voice | edge-tts (Turkish) |
+| Render | FFmpeg (9:16 Shorts) |
+| Upload | YouTube Data API v3 |
+| Storage | SQLite |
+| Scheduling | Windows Task Scheduler (n8n in Phase 2 only) |
+
+## Code standards
+
+- Minimal, focused diffs; match existing patterns
+- Never commit secrets: `.env`, `credentials/`, `token.json`
+- Every successful run produces `content_package.json` + `video.mp4`
+- No render or upload without Reviewer `APPROVE`
+- Default format: Shorts, 9:16, ~45–60 seconds
+- `publishers/base.py` interface for future platforms; do not hardcode YouTube in `core/`
+
+## Agent pipeline
+
+1. Topic Agent → unique topic (respect `used_topics`)
+2. Master Content Agent → full production JSON
+3. Reviewer Agent → quality gate (avg ≥ 7, policy_risk ≥ 7)
+4. On REJECT: retry Master with `fix_instructions` (max 2 attempts)
+
+## User workflow
+
+- User progresses step-by-step and commits manually
+- Agent suggests commit messages only; no automatic commit or push
+- Missing API keys or accounts: explain setup steps to the user before proceeding
+
+## n8n
+
+- Not used in Phase 1
+- Phase 2: orchestration only (cron → HTTP trigger → notify); render stays in Python
