@@ -23,6 +23,8 @@ assets/*
 output/
 data/*.db
 data/*.sqlite3
+data/logs/*
+!data/logs/.gitkeep
 !data/.gitkeep
 
 # IDE and OS

@@ -23,7 +23,7 @@ Autonomous short-form video production pipeline for YouTube Shorts, designed to 
 8. ✅ SQLite topic tracking
 9. ✅ YouTube publisher (OAuth)
 10. ✅ End-to-end `main.py`
-11. Task Scheduler documentation
+11. ✅ Task Scheduler documentation
 12. Telegram notifications (optional)
 13. n8n orchestration (Phase 2, optional)
 
@@ -269,6 +269,53 @@ python main.py --skip-thumbnail-upload
 ```
 
 Requires `.env`: `GEMINI_API_KEY`, `PEXELS_API_KEY`. YouTube upload also needs `credentials/client_secret.json` + `credentials/token.json`.
+
+## Step 11 — Windows Task Scheduler (daily automation)
+
+Run the full pipeline on a schedule while the PC is on. Logs go to `data/logs/` (gitignored).
+
+### Wrapper script
+
+```powershell
+scripts\run_scheduled.bat
+scripts\run_scheduled.bat --no-upload
+```
+
+Uses `.venv\Scripts\python.exe` when present, otherwise `python` on PATH. Writes `data/logs/factory_YYYYMMDD_HHMMSS.log`.
+
+### Create the scheduled task
+
+1. **Win + R** → `taskschd.msc` → Enter
+2. **Create Task…** (not “Create Basic Task”)
+3. **General:** name `AI Content Factory Daily`
+4. **Triggers:** Daily (example: 10:00)
+5. **Actions:** Start a program
+   - Program: `c:\trk\ai-content-factory\scripts\run_scheduled.bat`
+   - Start in: `c:\trk\ai-content-factory`
+6. **Conditions:** disable “AC power only” on laptops if you want battery runs
+7. **Settings:** optional “Stop if runs longer than” → 2 hours
+
+Test: right-click the task → **Run**, then open the newest file in `data/logs/`.
+
+### Recommended schedule
+
+| Phase | Command | Notes |
+|-------|---------|--------|
+| First test | `run_scheduled.bat --no-upload` | No YouTube upload |
+| Production | `run_scheduled.bat` | Topic Agent picks a new topic; uploads as `unlisted` by default |
+
+One video per day is enough for a new channel and stays within free API tiers.
+
+### Troubleshooting
+
+| Issue | Fix |
+|-------|-----|
+| `python` not found | Install Python or use full path in the batch file |
+| OAuth / token errors | Run while logged in; re-run `python scripts/upload_youtube.py --auth-only` |
+| FFmpeg missing | `winget install Gyan.FFmpeg` or set `FFMPEG_PATH` in `.env` |
+| Task did not run | PC was off; enable “Run as soon as possible after a scheduled start is missed” |
+
+Phase 2 optional orchestration (n8n) can trigger the same batch file over HTTP; production logic stays in Python.
 
 ## Workflow
 
