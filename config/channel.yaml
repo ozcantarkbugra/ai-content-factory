@@ -28,3 +28,7 @@ production:
   reviewer_min_score: 7.0
   reviewer_max_retries: 2
   altered_content_default: false
+
+youtube:
+  privacy_status: unlisted  # public | unlisted | private — use unlisted while testing
+  default_category: Education

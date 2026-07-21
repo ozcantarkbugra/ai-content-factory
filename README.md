@@ -21,7 +21,7 @@ Autonomous short-form video production pipeline for YouTube Shorts, designed to 
 6. ✅ FFmpeg 9:16 renderer
 7. ✅ Thumbnail generator
 8. ✅ SQLite topic tracking
-9. YouTube publisher (OAuth)
+9. ✅ YouTube publisher (OAuth)
 10. End-to-end `main.py`
 11. Task Scheduler documentation
 12. Telegram notifications (optional)
@@ -179,6 +179,56 @@ python scripts/run_agents.py --topic "Test konusu" --no-persist
 ```
 
 The Topic Agent automatically receives previously used topics for the current niche from SQLite.
+
+## Step 9 — YouTube upload (OAuth)
+
+YouTube upload uses **OAuth 2.0** (not an API key). One-time Google Cloud setup:
+
+1. Open [Google Cloud Console](https://console.cloud.google.com/) and create a project.
+2. Enable **YouTube Data API v3** (APIs & Services → Library).
+3. Configure **OAuth consent screen** (External, add your Google account as a test user).
+4. Create **OAuth client ID** → Application type: **Desktop app**.
+5. Download JSON → save as `credentials/client_secret.json` (gitignored).
+
+Install upload dependencies:
+
+```powershell
+pip install -r requirements.txt
+```
+
+**First run — authorize channel (opens browser):**
+
+```powershell
+python scripts/upload_youtube.py --auth-only
+```
+
+Token is saved to `credentials/token.json` (gitignored). Re-auth only if you revoke access or delete the token.
+
+**Dry-run (no upload, validates local files):**
+
+```powershell
+python scripts/upload_youtube.py --dry-run --video output/short.mp4 --thumbnail output/thumbnail.jpg --title "Test Short"
+```
+
+**Upload rendered Short + thumbnail:**
+
+```powershell
+python scripts/upload_youtube.py --video output/short.mp4 --thumbnail output/thumbnail.jpg --title "Osmanlı'nın Gizli Savaş Taktiği"
+```
+
+**Upload from content package JSON (uses SEO metadata + hashtags):**
+
+```powershell
+python scripts/upload_youtube.py --package schemas/content_package.example.json --video output/short.mp4 --thumbnail output/thumbnail.jpg
+```
+
+Default privacy is **`unlisted`** (`config/channel.yaml` → `youtube.privacy_status`). Override:
+
+```powershell
+python scripts/upload_youtube.py --video output/short.mp4 --privacy public
+```
+
+Modules: `publishers/base.py` (interface), `publishers/youtube.py` (OAuth + resumable upload + thumbnail).
 
 ## Workflow
 

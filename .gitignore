@@ -2,6 +2,7 @@
 .env
 .env.local
 credentials/
+!credentials/.gitkeep
 token.json
 client_secret.json
 *.pem
