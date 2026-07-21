@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-import shutil
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
@@ -11,6 +10,7 @@ from pathlib import Path
 import edge_tts
 
 from core.config import PROJECT_ROOT, ChannelConfig, load_channel_config
+from core.media_probe import FFmpegNotFoundError, probe_media_duration
 from core.schemas import ContentPlan
 
 
@@ -27,28 +27,9 @@ class VoiceResult:
 
 
 def _probe_duration_ffprobe(audio_path: Path) -> float | None:
-    ffprobe = shutil.which("ffprobe")
-    if not ffprobe:
-        return None
     try:
-        result = subprocess.run(
-            [
-                ffprobe,
-                "-v",
-                "error",
-                "-show_entries",
-                "format=duration",
-                "-of",
-                "default=noprint_wrappers=1:nokey=1",
-                str(audio_path),
-            ],
-            capture_output=True,
-            text=True,
-            check=True,
-            timeout=15,
-        )
-        return round(float(result.stdout.strip()), 2)
-    except (subprocess.SubprocessError, ValueError, OSError):
+        return probe_media_duration(audio_path)
+    except (FFmpegNotFoundError, subprocess.SubprocessError, ValueError, OSError):
         return None
 
 

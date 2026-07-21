@@ -18,7 +18,7 @@ Autonomous short-form video production pipeline for YouTube Shorts, designed to 
 3. ✅ Gemini agent pipeline (topic → master → reviewer)
 4. ✅ Pexels + Pollinations image fetchers
 5. ✅ edge-tts narration
-6. FFmpeg 9:16 renderer
+6. ✅ FFmpeg 9:16 renderer
 7. Thumbnail generator
 8. SQLite topic tracking
 9. YouTube publisher (OAuth)
@@ -107,6 +107,36 @@ python scripts/synthesize_voice.py --topic "Osmanlı'nın bilinmeyen savaş takt
 ```
 
 Output: `assets/voice.mp3` (duration shown if `ffprobe` is installed).
+
+## Step 6 — FFmpeg render (9:16 Short)
+
+Install FFmpeg first (includes `ffprobe`):
+
+```powershell
+winget install Gyan.FFmpeg
+```
+
+Restart the terminal, then verify:
+
+```powershell
+ffmpeg -version
+```
+
+If `ffmpeg` is still not recognized but winget says it is installed, restart Cursor/terminal or set `FFMPEG_PATH` / `FFPROBE_PATH` in `.env`. The app also auto-detects winget installs on Windows.
+
+**Render using existing assets (fastest after Steps 4–5):**
+
+```powershell
+python scripts/render_video.py --topic "Osmanlı'nın bilinmeyen savaş taktiği" --reuse-assets
+```
+
+**Full pipeline (agents + images + voice + render):**
+
+```powershell
+python scripts/render_video.py --topic "Osmanlı'nın bilinmeyen savaş taktiği" --full
+```
+
+Output: `output/short.mp4`
 
 ## Workflow
 

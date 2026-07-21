@@ -9,6 +9,8 @@ from core.config import (
     render_prompt,
 )
 from core.images import ImageFetchError, PollinationsClient, PexelsClient, SceneAssetFetcher
+from core.media_probe import FFmpegNotFoundError
+from core.render import RenderError, RenderResult, ShortsRenderer
 from core.schemas import (
     ContentPackage,
     ContentPlan,
@@ -27,13 +29,17 @@ __all__ = [
     "ContentPackage",
     "ContentPlan",
     "ImageFetchError",
+    "FFmpegNotFoundError",
     "NarrationSynthesizer",
     "PollinationsClient",
     "PexelsClient",
+    "RenderError",
+    "RenderResult",
     "ReviewDecision",
     "ReviewResult",
     "SchemaError",
     "SceneAssetFetcher",
+    "ShortsRenderer",
     "TopicSelection",
     "TtsError",
     "VoiceResult",
