@@ -19,7 +19,7 @@ Autonomous short-form video production pipeline for YouTube Shorts, designed to 
 4. ✅ Pexels + Pollinations image fetchers
 5. ✅ edge-tts narration
 6. ✅ FFmpeg 9:16 renderer
-7. Thumbnail generator
+7. ✅ Thumbnail generator
 8. SQLite topic tracking
 9. YouTube publisher (OAuth)
 10. End-to-end `main.py`
@@ -137,6 +137,24 @@ python scripts/render_video.py --topic "Osmanlı'nın bilinmeyen savaş taktiği
 ```
 
 Output: `output/short.mp4`
+
+## Step 7 — Thumbnail (1280x720)
+
+YouTube custom thumbnails use **1280x720** (16:9). The generator uses the first scene image when available, then adds bold overlay text from the content plan.
+
+**Quick test (no API keys):**
+
+```powershell
+python scripts/generate_thumbnail.py --base-image assets/scenes/scene_01.jpg --text "GIZLI TAKTIK"
+```
+
+**From agent plan + existing scenes:**
+
+```powershell
+python scripts/generate_thumbnail.py --topic "Osmanlı'nın bilinmeyen savaş taktiği" --reuse-assets
+```
+
+Output: `output/thumbnail.jpg`
 
 ## Workflow
 

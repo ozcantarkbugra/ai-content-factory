@@ -20,6 +20,7 @@ from core.schemas import (
     TopicSelection,
 )
 from core.tts import NarrationSynthesizer, TtsError, VoiceResult
+from core.thumbnail import ThumbnailError, ThumbnailGenerator, ThumbnailResult
 
 __all__ = [
     "AgentPipelineError",
@@ -40,6 +41,9 @@ __all__ = [
     "SchemaError",
     "SceneAssetFetcher",
     "ShortsRenderer",
+    "ThumbnailError",
+    "ThumbnailGenerator",
+    "ThumbnailResult",
     "TopicSelection",
     "TtsError",
     "VoiceResult",
