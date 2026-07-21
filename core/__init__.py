@@ -1,5 +1,6 @@
 """Core production pipeline — config, schemas, and shared utilities."""
 
+from core.agent import AgentPipelineError, ContentAgentPipeline, ContentPipelineResult
 from core.config import (
     ChannelConfig,
     build_agent_prompt,
@@ -17,7 +18,10 @@ from core.schemas import (
 )
 
 __all__ = [
+    "AgentPipelineError",
     "ChannelConfig",
+    "ContentAgentPipeline",
+    "ContentPipelineResult",
     "ContentPackage",
     "ContentPlan",
     "ReviewDecision",

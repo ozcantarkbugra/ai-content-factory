@@ -13,9 +13,9 @@ Autonomous short-form video production pipeline for YouTube Shorts, designed to 
 
 ## Phase 1 roadmap
 
-1. Project skeleton, cursor rules, agent prompts
-2. Channel config and content package schema
-3. Gemini agent pipeline (topic → master → reviewer)
+1. ✅ Project skeleton, cursor rules, agent prompts
+2. ✅ Channel config and content package schema
+3. ✅ Gemini agent pipeline (topic → master → reviewer)
 4. Pexels + Pollinations image fetchers
 5. edge-tts narration
 6. FFmpeg 9:16 renderer
@@ -57,6 +57,24 @@ python scripts/verify_config.py
 | `core/config.py` | Load `channel.yaml`, render agent prompts |
 | `core/schemas.py` | Topic, ContentPlan, ReviewResult, ContentPackage |
 | `schemas/content_package.example.json` | Example final output after a successful run |
+
+## Step 3 — Gemini agents
+
+1. Open [Google AI Studio](https://aistudio.google.com/apikey) and create an API key.
+2. Copy `.env.example` → `.env` and set `GEMINI_API_KEY`.
+3. Install dependencies and run the pipeline:
+
+```powershell
+pip install -r requirements.txt
+python scripts/run_agents.py
+python scripts/run_agents.py --topic "Osmanlı'nın bilinmeyen savaşları"
+```
+
+Prompt-only check (no API call):
+
+```powershell
+python scripts/run_agents.py --dry-run --topic "Test konusu"
+```
 
 ## Workflow
 
