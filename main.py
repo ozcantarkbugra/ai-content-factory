@@ -14,6 +14,7 @@ if str(ROOT) not in sys.path:
 from core.env import load_dotenv  # noqa: E402
 from core.pipeline import ContentFactoryPipeline, PipelineError  # noqa: E402
 from core.telegram import TelegramError, TelegramNotifier  # noqa: E402
+from publishers.registry import SUPPORTED_PLATFORMS, normalize_platforms  # noqa: E402
 
 
 def _configure_stdout() -> None:
@@ -24,12 +25,17 @@ def _configure_stdout() -> None:
             pass
 
 
+def _parse_platforms(value: str) -> list[str]:
+    return normalize_platforms([part.strip() for part in value.split(",") if part.strip()])
+
+
 def main() -> int:
     load_dotenv()
     _configure_stdout()
 
+    supported = ", ".join(SUPPORTED_PLATFORMS)
     parser = argparse.ArgumentParser(
-        description="Run the full AI Content Factory pipeline (topic → YouTube)",
+        description="Run the full AI Content Factory pipeline (topic → publish)",
     )
     parser.add_argument("--topic", help="Use this topic instead of the Topic Agent")
     parser.add_argument("--angle", help="Optional angle when --topic is set")
@@ -54,6 +60,10 @@ def main() -> int:
         help="YouTube privacy (default: channel.yaml or unlisted)",
     )
     parser.add_argument(
+        "--platforms",
+        help=f"Comma-separated publish targets (default: config/channel.yaml). Supported: {supported}",
+    )
+    parser.add_argument(
         "--no-notify",
         action="store_true",
         help="Skip Telegram notification even when configured",
@@ -63,6 +73,8 @@ def main() -> int:
         help="Output directory root (default: output/)",
     )
     args = parser.parse_args()
+
+    platforms = _parse_platforms(args.platforms) if args.platforms else None
 
     pipeline = ContentFactoryPipeline()
     notifier = TelegramNotifier()
@@ -75,6 +87,7 @@ def main() -> int:
             upload=not args.no_upload,
             skip_thumbnail_upload=args.skip_thumbnail_upload,
             privacy_status=args.privacy,
+            platforms=platforms,
             persist=not args.no_persist,
             output_root=args.output_root,
         )
@@ -106,15 +119,35 @@ def main() -> int:
         "content_package": str(result.package_dir / "content_package.json"),
     }
 
-    if result.publish_result:
+    if result.publish_results:
+        payload["publish_results"] = [
+            {
+                "platform": item.platform,
+                "remote_id": item.remote_id,
+                "url": item.url,
+                "privacy_status": item.privacy_status,
+                "thumbnail_applied": item.thumbnail_applied,
+                "thumbnail_warning": item.thumbnail_warning,
+            }
+            for item in result.publish_results
+        ]
+
+    youtube = result.publish_result
+    if youtube and youtube.platform == "youtube":
         payload["youtube"] = {
-            "video_id": result.publish_result.remote_id,
-            "url": result.publish_result.url,
-            "privacy_status": result.publish_result.privacy_status,
-            "thumbnail_applied": result.publish_result.thumbnail_applied,
+            "video_id": youtube.remote_id,
+            "url": youtube.url,
+            "privacy_status": youtube.privacy_status,
+            "thumbnail_applied": youtube.thumbnail_applied,
         }
-        if result.publish_result.thumbnail_warning:
-            payload["youtube"]["thumbnail_warning"] = result.publish_result.thumbnail_warning
+        if youtube.thumbnail_warning:
+            payload["youtube"]["thumbnail_warning"] = youtube.thumbnail_warning
+
+    if result.publish_errors:
+        payload["publish_errors"] = [
+            {"platform": platform, "error": message}
+            for platform, message in result.publish_errors
+        ]
 
     print(json.dumps(payload, ensure_ascii=False, indent=2))
     return 0

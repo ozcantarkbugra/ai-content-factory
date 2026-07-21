@@ -44,6 +44,11 @@ def _build_main_command(payload: dict[str, Any]) -> list[str]:
     privacy = str(payload.get("privacy", "")).strip().lower()
     if privacy in {"public", "unlisted", "private"}:
         command.extend(["--privacy", privacy])
+    platforms = payload.get("platforms")
+    if isinstance(platforms, list) and platforms:
+        command.extend(["--platforms", ",".join(str(item) for item in platforms)])
+    elif isinstance(platforms, str) and platforms.strip():
+        command.extend(["--platforms", platforms.strip()])
     return command
 
 

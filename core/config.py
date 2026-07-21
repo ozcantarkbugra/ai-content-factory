@@ -51,12 +51,19 @@ class ProductionSettings:
 
 
 @dataclass(frozen=True)
+class PublishSettings:
+    platforms: tuple[str, ...]
+    fail_fast: bool
+
+
+@dataclass(frozen=True)
 class ChannelConfig:
     channel: ChannelIdentity
     format: FormatSettings
     voice: VoiceSettings
     visuals: VisualSettings
     production: ProductionSettings
+    publish: PublishSettings
     config_path: Path
 
     def prompt_variables(
@@ -111,6 +118,14 @@ def load_channel_config(path: Path | str | None = None) -> ChannelConfig:
     voice = _require(raw, "voice", "root")
     visuals = _require(raw, "visuals", "root")
     production = _require(raw, "production", "root")
+    publish = raw.get("publish") or {}
+
+    platforms_raw = publish.get("platforms") or ["youtube"]
+    if not isinstance(platforms_raw, list):
+        raise ValueError("publish.platforms must be a list in channel config")
+    platforms = tuple(str(item).strip().lower() for item in platforms_raw if str(item).strip())
+    if not platforms:
+        platforms = ("youtube",)
 
     return ChannelConfig(
         channel=ChannelIdentity(
@@ -140,6 +155,10 @@ def load_channel_config(path: Path | str | None = None) -> ChannelConfig:
             reviewer_min_score=float(_require(production, "reviewer_min_score", "production")),
             reviewer_max_retries=int(_require(production, "reviewer_max_retries", "production")),
             altered_content_default=bool(_require(production, "altered_content_default", "production")),
+        ),
+        publish=PublishSettings(
+            platforms=platforms,
+            fail_fast=bool(publish.get("fail_fast", True)),
         ),
         config_path=config_path.resolve(),
     )

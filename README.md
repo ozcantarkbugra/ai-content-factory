@@ -27,6 +27,13 @@ Autonomous short-form video production pipeline for YouTube Shorts, designed to 
 12. ✅ Telegram notifications (optional)
 13. ✅ n8n orchestration (Phase 2, optional)
 
+## Phase 2 roadmap — multi-platform
+
+14. ✅ Multi-platform publish infrastructure (`publishers/registry.py`, `--platforms`)
+15. 🔜 TikTok publisher (Content Posting API)
+16. 🔜 Instagram Reels publisher (Meta Graph API)
+17. 🔜 Platform-specific agent captions (optional)
+
 ## Setup
 
 ```powershell
@@ -427,6 +434,47 @@ Log tail: `GET http://127.0.0.1:8765/status`
 ### Scheduling note
 
 You already have **Windows Task Scheduler** at 10:00. Do **not** enable both n8n daily trigger and Task Scheduler unless you want two videos per day. Pick one primary scheduler.
+
+## Step 14 — Multi-platform publish infrastructure
+
+One rendered `video.mp4` can be uploaded to multiple platforms. Production is unchanged; only the publish layer loops over adapters in `publishers/`.
+
+### Config (`config/channel.yaml`)
+
+```yaml
+publish:
+  platforms:
+    - youtube
+    # - tiktok      # Step 15
+    # - instagram   # Step 16
+  fail_fast: true   # false = continue if one platform fails
+```
+
+### CLI
+
+```powershell
+# Default: platforms from channel.yaml (youtube only)
+python main.py
+
+# Explicit platforms (TikTok/Instagram stubs until Steps 15–16)
+python main.py --platforms youtube
+python main.py --platforms youtube,tiktok,instagram
+```
+
+JSON output includes `publish_results` (list) and optional `publish_errors`. `youtube` key remains for backward compatibility.
+
+### n8n / trigger server
+
+Optional JSON body field:
+
+```json
+{ "platforms": ["youtube"] }
+```
+
+### Next steps
+
+- **Step 15:** `publishers/tiktok.py` — TikTok Content Posting API + OAuth
+- **Step 16:** `publishers/instagram.py` — Instagram Reels via Meta Graph API
 
 ## Workflow
 

@@ -53,32 +53,7 @@ class BasePublisher(ABC):
         thumbnail_path: Path | None = None,
         privacy_status: str | None = None,
     ) -> PublishResult:
-        """Upload using metadata from a content package."""
-        resolved_video = video_path
-        if resolved_video is None:
-            if not package.assets.video_path:
-                raise PublisherError("ContentPackage has no assets.video_path")
-            resolved_video = Path(package.assets.video_path)
-
-        resolved_thumbnail = thumbnail_path
-        if resolved_thumbnail is None and package.assets.thumbnail_path:
-            resolved_thumbnail = Path(package.assets.thumbnail_path)
-
-        overrides = package.platform_overrides.youtube
-        title = str(overrides.get("title") or package.content_plan.seo.title)
-        description = str(
-            overrides.get("description") or package.content_plan.seo.description
-        )
-        tags_raw = overrides.get("tags") or package.content_plan.seo.tags
-        tags = [str(tag) for tag in tags_raw] if tags_raw else None
-        category = overrides.get("category") or package.content_plan.seo.category
-
-        return self.publish(
-            video_path=resolved_video,
-            title=title,
-            description=description,
-            tags=tags,
-            thumbnail_path=resolved_thumbnail,
-            category=str(category) if category else None,
-            privacy_status=privacy_status,
+        """Upload using metadata from a content package — override per platform."""
+        raise NotImplementedError(
+            f"{type(self).__name__} must implement publish_package()"
         )

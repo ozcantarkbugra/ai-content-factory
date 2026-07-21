@@ -72,10 +72,15 @@ class TelegramNotifier:
             f"Durum: {result.package.status}",
             f"Paket: {result.package.package_id}",
         ]
-        if result.publish_result:
-            lines.extend(self._youtube_lines(result.publish_result))
+        if result.publish_results:
+            lines.extend(self._publish_lines(result.publish_results))
         elif result.package.status == "ready":
-            lines.append("YouTube: yüklenmedi (--no-upload)")
+            lines.append("Yukleme: yapilmadi (--no-upload)")
+
+        if result.publish_errors:
+            for platform, message in result.publish_errors:
+                lines.append(f"Uyari ({platform}): {message[:180]}")
+
         self.send_message("\n".join(lines))
 
     def notify_failure(self, error: str, *, topic: str | None = None) -> None:
@@ -85,6 +90,16 @@ class TelegramNotifier:
             f"Hata: {error[:500]}",
         ]
         self.send_message("\n".join(lines))
+
+    @staticmethod
+    def _publish_lines(results: list[PublishResult]) -> list[str]:
+        lines: list[str] = []
+        for publish in results:
+            if publish.platform == "youtube":
+                lines.extend(TelegramNotifier._youtube_lines(publish))
+            else:
+                lines.append(f"{publish.platform.title()}: {publish.url}")
+        return lines
 
     @staticmethod
     def _youtube_lines(publish: PublishResult) -> list[str]:

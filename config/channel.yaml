@@ -33,5 +33,12 @@ youtube:
   privacy_status: unlisted  # public | unlisted | private — use unlisted while testing
   default_category: Education
 
+publish:
+  platforms:
+    - youtube
+    # - tiktok      # Step 15
+    # - instagram   # Step 16
+  fail_fast: true  # false = continue when one platform fails
+
 schedule:
   target_videos_per_day: 1  # Task Scheduler: one daily trigger = one upload; raise later (e.g. 10)

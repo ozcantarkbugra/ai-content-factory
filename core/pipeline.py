@@ -1,15 +1,15 @@
-"""End-to-end production pipeline — agents through optional YouTube upload."""
+"""End-to-end production pipeline — agents through optional multi-platform upload."""
 
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from core.agent import AgentPipelineError, ContentAgentPipeline, ContentPipelineResult
 from core.config import PROJECT_ROOT, ChannelConfig, load_channel_config
 from core.db import ContentFactoryDB, DatabaseError
-from core.env import get_env, require_env
+from core.env import require_env
 from core.images import ImageFetchError, SceneAssetFetcher
 from core.media_probe import FFmpegNotFoundError
 from core.render import RenderError, ShortsRenderer
@@ -17,7 +17,11 @@ from core.schemas import ContentPackage
 from core.thumbnail import ThumbnailError, ThumbnailGenerator
 from core.tts import NarrationSynthesizer, TtsError
 from publishers.base import PublishResult, PublisherError
-from publishers.youtube import YouTubePublisher
+from publishers.registry import (
+    default_youtube_privacy,
+    publish_to_platforms,
+    resolve_platforms,
+)
 
 
 class PipelineError(RuntimeError):
@@ -29,7 +33,16 @@ class FactoryRunResult:
     package: ContentPackage
     package_dir: Path
     agent_result: ContentPipelineResult
-    publish_result: PublishResult | None = None
+    publish_results: list[PublishResult] = field(default_factory=list)
+    publish_errors: list[tuple[str, str]] = field(default_factory=list)
+
+    @property
+    def publish_result(self) -> PublishResult | None:
+        """Backward-compatible accessor — prefer YouTube, else first result."""
+        for result in self.publish_results:
+            if result.platform == "youtube":
+                return result
+        return self.publish_results[0] if self.publish_results else None
 
 
 def _relative_path(path: Path) -> str:
@@ -38,22 +51,6 @@ def _relative_path(path: Path) -> str:
         return resolved.relative_to(PROJECT_ROOT).as_posix()
     except ValueError:
         return str(resolved)
-
-
-def _default_privacy(config: ChannelConfig) -> str:
-    try:
-        import yaml
-
-        with config.config_path.open(encoding="utf-8") as handle:
-            raw = yaml.safe_load(handle) or {}
-        youtube = raw.get("youtube") or {}
-        privacy = str(youtube.get("privacy_status", "")).strip().lower()
-        if privacy in {"public", "unlisted", "private"}:
-            return privacy
-    except Exception:
-        pass
-    env_privacy = get_env("YOUTUBE_PRIVACY_STATUS", "unlisted").lower()
-    return env_privacy if env_privacy in {"public", "unlisted", "private"} else "unlisted"
 
 
 class ContentFactoryPipeline:
@@ -75,6 +72,7 @@ class ContentFactoryPipeline:
         upload: bool = True,
         skip_thumbnail_upload: bool = False,
         privacy_status: str | None = None,
+        platforms: list[str] | None = None,
         persist: bool = True,
         output_root: Path | str | None = None,
     ) -> FactoryRunResult:
@@ -155,35 +153,44 @@ class ContentFactoryPipeline:
             encoding="utf-8",
         )
 
-        publish_result: PublishResult | None = None
+        publish_results: list[PublishResult] = []
+        publish_errors: list[tuple[str, str]] = []
         if upload:
-            privacy = privacy_status or _default_privacy(self.config)
-            publisher = YouTubePublisher(privacy_status=privacy)
-            try:
-                publisher.authenticate()
-                publish_result = publisher.publish_package(
-                    package,
-                    video_path=render_result.video_path,
-                    thumbnail_path=None
-                    if skip_thumbnail_upload
-                    else thumb_result.thumbnail_path,
-                    privacy_status=privacy,
-                )
+            privacy = privacy_status or default_youtube_privacy(self.config)
+            target_platforms = resolve_platforms(self.config, cli_platforms=platforms)
+            batch = publish_to_platforms(
+                package,
+                target_platforms,
+                video_path=render_result.video_path,
+                thumbnail_path=thumb_result.thumbnail_path,
+                skip_thumbnail_upload=skip_thumbnail_upload,
+                privacy_status=privacy,
+                fail_fast=self.config.publish.fail_fast,
+            )
+            publish_results = batch.results
+            publish_errors = batch.errors
+
+            if batch.succeeded:
                 package.status = "published"
-            except PublisherError as exc:
+            else:
                 package.status = "failed"
                 package_path.write_text(
                     json.dumps(package.to_dict(), ensure_ascii=False, indent=2),
                     encoding="utf-8",
+                )
+                error_summary = "; ".join(
+                    f"{platform}: {message}" for platform, message in publish_errors
                 )
                 if persist:
                     self._log_run(
                         agent_result,
                         package,
                         status="failed",
-                        metadata={"error": str(exc)},
+                        publish_results=publish_results,
+                        publish_errors=publish_errors,
+                        metadata={"error": error_summary},
                     )
-                raise PipelineError(str(exc)) from exc
+                raise PipelineError(error_summary or "Upload failed for all platforms") from None
 
             package_path.write_text(
                 json.dumps(package.to_dict(), ensure_ascii=False, indent=2),
@@ -195,14 +202,16 @@ class ContentFactoryPipeline:
                 agent_result,
                 package,
                 status=package.status,
-                publish_result=publish_result,
+                publish_results=publish_results,
+                publish_errors=publish_errors,
             )
 
         return FactoryRunResult(
             package=package,
             package_dir=package_dir,
             agent_result=agent_result,
-            publish_result=publish_result,
+            publish_results=publish_results,
+            publish_errors=publish_errors,
         )
 
     def _log_run(
@@ -211,21 +220,39 @@ class ContentFactoryPipeline:
         package: ContentPackage,
         *,
         status: str,
-        publish_result: PublishResult | None = None,
+        publish_results: list[PublishResult] | None = None,
+        publish_errors: list[tuple[str, str]] | None = None,
         metadata: dict | None = None,
     ) -> None:
-        payload = metadata or {}
-        if publish_result:
+        payload = dict(metadata or {})
+        if publish_results:
+            payload["publish_results"] = [
+                {
+                    "platform": result.platform,
+                    "remote_id": result.remote_id,
+                    "url": result.url,
+                    "privacy_status": result.privacy_status,
+                    "thumbnail_applied": result.thumbnail_applied,
+                    "thumbnail_warning": result.thumbnail_warning,
+                }
+                for result in publish_results
+            ]
+            first = publish_results[0]
             payload.update(
                 {
-                    "platform": publish_result.platform,
-                    "remote_id": publish_result.remote_id,
-                    "url": publish_result.url,
-                    "privacy_status": publish_result.privacy_status,
-                    "thumbnail_applied": publish_result.thumbnail_applied,
-                    "thumbnail_warning": publish_result.thumbnail_warning,
+                    "platform": first.platform,
+                    "remote_id": first.remote_id,
+                    "url": first.url,
+                    "privacy_status": first.privacy_status,
+                    "thumbnail_applied": first.thumbnail_applied,
+                    "thumbnail_warning": first.thumbnail_warning,
                 }
             )
+        if publish_errors:
+            payload["publish_errors"] = [
+                {"platform": platform, "error": message}
+                for platform, message in publish_errors
+            ]
         try:
             self.db.log_production_run(
                 niche=self.config.channel.niche,
