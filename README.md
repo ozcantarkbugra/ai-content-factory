@@ -20,7 +20,7 @@ Autonomous short-form video production pipeline for YouTube Shorts, designed to 
 5. ✅ edge-tts narration
 6. ✅ FFmpeg 9:16 renderer
 7. ✅ Thumbnail generator
-8. SQLite topic tracking
+8. ✅ SQLite topic tracking
 9. YouTube publisher (OAuth)
 10. End-to-end `main.py`
 11. Task Scheduler documentation
@@ -155,6 +155,30 @@ python scripts/generate_thumbnail.py --topic "Osmanlı'nın bilinmeyen savaş ta
 ```
 
 Output: `output/thumbnail.jpg`
+
+## Step 8 — SQLite storage
+
+Topic history and production runs are stored in `data/factory.db` (gitignored).
+
+**Inspect database:**
+
+```powershell
+python scripts/manage_db.py
+```
+
+**Agent run with persistence (default):**
+
+```powershell
+python scripts/run_agents.py --topic "Osmanlı'nın bilinmeyen savaş taktiği"
+```
+
+Skip persistence:
+
+```powershell
+python scripts/run_agents.py --topic "Test konusu" --no-persist
+```
+
+The Topic Agent automatically receives previously used topics for the current niche from SQLite.
 
 ## Workflow
 

@@ -21,6 +21,7 @@ from core.schemas import (
 )
 from core.tts import NarrationSynthesizer, TtsError, VoiceResult
 from core.thumbnail import ThumbnailError, ThumbnailGenerator, ThumbnailResult
+from core.db import ContentFactoryDB, DatabaseError, ProductionRunRecord, DEFAULT_DB_PATH
 
 __all__ = [
     "AgentPipelineError",
@@ -29,11 +30,15 @@ __all__ = [
     "ContentPipelineResult",
     "ContentPackage",
     "ContentPlan",
+    "ContentFactoryDB",
+    "DatabaseError",
+    "DEFAULT_DB_PATH",
     "ImageFetchError",
     "FFmpegNotFoundError",
     "NarrationSynthesizer",
     "PollinationsClient",
     "PexelsClient",
+    "ProductionRunRecord",
     "RenderError",
     "RenderResult",
     "ReviewDecision",

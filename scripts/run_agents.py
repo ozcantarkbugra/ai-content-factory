@@ -12,6 +12,7 @@ sys.path.insert(0, str(ROOT))
 
 from core.agent import AgentPipelineError, ContentAgentPipeline  # noqa: E402
 from core.config import build_agent_prompt, load_channel_config  # noqa: E402
+from core.db import ContentFactoryDB  # noqa: E402
 from core.env import load_dotenv  # noqa: E402
 
 
@@ -30,6 +31,11 @@ def main() -> int:
         "--dry-run",
         action="store_true",
         help="Build prompts only; do not call Gemini (requires --topic)",
+    )
+    parser.add_argument(
+        "--no-persist",
+        action="store_true",
+        help="Do not write topic/run history to SQLite",
     )
     args = parser.parse_args()
 
@@ -50,12 +56,13 @@ def main() -> int:
         print("\n(dry-run: Gemini not called)")
         return 0
 
-    pipeline = ContentAgentPipeline()
+    pipeline = ContentAgentPipeline(db=None if args.no_persist else ContentFactoryDB())
 
     try:
         result = pipeline.run_content_pipeline(
             manual_topic=args.topic,
             manual_angle=args.angle,
+            persist=not args.no_persist,
         )
     except AgentPipelineError as exc:
         print(f"FAILED: {exc}")

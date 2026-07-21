@@ -6,6 +6,7 @@ import json
 from dataclasses import dataclass
 
 from core.config import ChannelConfig, build_agent_prompt, load_channel_config
+from core.db import ContentFactoryDB
 from core.gemini_client import GeminiClient
 from core.schemas import (
     ContentPlan,
@@ -37,9 +38,11 @@ class ContentAgentPipeline:
         self,
         config: ChannelConfig | None = None,
         client: GeminiClient | None = None,
+        db: ContentFactoryDB | None = None,
     ) -> None:
         self.config = config or load_channel_config()
         self._client = client
+        self.db = db
 
     @property
     def client(self) -> GeminiClient:
@@ -146,7 +149,12 @@ class ContentAgentPipeline:
         trend_hints: str = "",
         manual_topic: str | None = None,
         manual_angle: str | None = None,
+        persist: bool = True,
     ) -> ContentPipelineResult:
+        used = used_topics
+        if used is None and self.db is not None:
+            used = self.db.get_used_topics(self.config.channel.niche)
+
         if manual_topic:
             topic = TopicSelection(
                 topic=manual_topic,
@@ -159,7 +167,7 @@ class ContentAgentPipeline:
                 risk_note=None,
             )
         else:
-            topic = self.run_topic_agent(used_topics=used_topics, trend_hints=trend_hints)
+            topic = self.run_topic_agent(used_topics=used, trend_hints=trend_hints)
 
         max_attempts = self.config.production.reviewer_max_retries + 1
         fix_instructions: list[str] | None = None
@@ -170,12 +178,15 @@ class ContentAgentPipeline:
             content_plan = self.run_master_agent(topic, fix_instructions=fix_instructions)
             review = self.run_reviewer_agent(content_plan)
             if review.is_approved():
-                return ContentPipelineResult(
+                result = ContentPipelineResult(
                     topic=topic,
                     content_plan=content_plan,
                     review=review,
                     attempts=attempt,
                 )
+                if persist and self.db is not None:
+                    self.db.record_pipeline_result(self.config, result)
+                return result
             fix_instructions = review.fix_instructions
 
         assert content_plan is not None and review is not None
