@@ -16,6 +16,7 @@ Autonomous short-form video production pipeline for YouTube Shorts, designed to 
 1. ✅ Project skeleton, cursor rules, agent prompts
 2. ✅ Channel config and content package schema
 3. ✅ Gemini agent pipeline (topic → master → reviewer)
+4. ✅ Pexels + Pollinations image fetchers
 4. Pexels + Pollinations image fetchers
 5. edge-tts narration
 6. FFmpeg 9:16 renderer
@@ -74,6 +75,20 @@ Prompt-only check (no API call):
 
 ```powershell
 python scripts/run_agents.py --dry-run --topic "Test konusu"
+```
+
+## Step 4 — Scene visuals (Pexels + Pollinations)
+
+**Pollinations test (no API key):**
+
+```powershell
+python scripts/fetch_scenes.py --pollinations-only
+```
+
+**Full scene fetch (requires `PEXELS_API_KEY` in `.env` for stock scenes):**
+
+```powershell
+python scripts/fetch_scenes.py --topic "Osmanlı'nın bilinmeyen savaş taktiği"
 ```
 
 ## Workflow
