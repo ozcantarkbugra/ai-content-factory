@@ -13,6 +13,7 @@ if str(ROOT) not in sys.path:
 
 from core.env import load_dotenv  # noqa: E402
 from core.pipeline import ContentFactoryPipeline, PipelineError  # noqa: E402
+from core.telegram import TelegramError, TelegramNotifier  # noqa: E402
 
 
 def _configure_stdout() -> None:
@@ -53,12 +54,19 @@ def main() -> int:
         help="YouTube privacy (default: channel.yaml or unlisted)",
     )
     parser.add_argument(
+        "--no-notify",
+        action="store_true",
+        help="Skip Telegram notification even when configured",
+    )
+    parser.add_argument(
         "--output-root",
         help="Output directory root (default: output/)",
     )
     args = parser.parse_args()
 
     pipeline = ContentFactoryPipeline()
+    notifier = TelegramNotifier()
+    notify = notifier.enabled and not args.no_notify
 
     try:
         result = pipeline.run(
@@ -72,10 +80,20 @@ def main() -> int:
         )
     except EnvironmentError as exc:
         print(f"CONFIG: {exc}")
+        if notify:
+            _safe_notify_failure(notifier, str(exc), args.topic)
         return 1
     except PipelineError as exc:
         print(f"PIPELINE FAILED: {exc}")
+        if notify:
+            _safe_notify_failure(notifier, str(exc), args.topic)
         return 1
+
+    if notify:
+        try:
+            notifier.notify_success(result)
+        except TelegramError as exc:
+            print(f"TELEGRAM WARNING: {exc}")
 
     payload: dict = {
         "status": result.package.status,
@@ -100,6 +118,17 @@ def main() -> int:
 
     print(json.dumps(payload, ensure_ascii=False, indent=2))
     return 0
+
+
+def _safe_notify_failure(
+    notifier: TelegramNotifier,
+    error: str,
+    topic: str | None,
+) -> None:
+    try:
+        notifier.notify_failure(error, topic=topic)
+    except TelegramError as exc:
+        print(f"TELEGRAM WARNING: {exc}")
 
 
 if __name__ == "__main__":

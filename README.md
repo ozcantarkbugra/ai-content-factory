@@ -24,7 +24,7 @@ Autonomous short-form video production pipeline for YouTube Shorts, designed to 
 9. ✅ YouTube publisher (OAuth)
 10. ✅ End-to-end `main.py`
 11. ✅ Task Scheduler documentation
-12. Telegram notifications (optional)
+12. ✅ Telegram notifications (optional)
 13. n8n orchestration (Phase 2, optional)
 
 ## Setup
@@ -302,9 +302,9 @@ Test: right-click the task → **Run**, then open the newest file in `data/logs/
 | Phase | Command | Notes |
 |-------|---------|--------|
 | First test | `run_scheduled.bat --no-upload` | No YouTube upload |
-| Production | `run_scheduled.bat` | Topic Agent picks a new topic; uploads as `unlisted` by default |
+| Production | `run_scheduled.bat` | **1× daily** → 1 video (`schedule.target_videos_per_day: 1` in `channel.yaml`) |
 
-One video per day is enough for a new channel and stays within free API tiers.
+Default target is **one video per day** (one scheduled task). To scale later (e.g. 10/day), add more triggers or tasks and update `config/channel.yaml`.
 
 ### Troubleshooting
 
@@ -316,6 +316,55 @@ One video per day is enough for a new channel and stays within free API tiers.
 | Task did not run | PC was off; enable “Run as soon as possible after a scheduled start is missed” |
 
 Phase 2 optional orchestration (n8n) can trigger the same batch file over HTTP; production logic stays in Python.
+
+## Step 12 — Telegram notifications (optional)
+
+Get a phone message when a run succeeds or fails. Uses the Telegram Bot API (no extra Python packages).
+
+### 1. Create a bot
+
+1. Open Telegram and message [@BotFather](https://t.me/BotFather)
+2. Send `/newbot` and follow the prompts
+3. Copy the **bot token** → `.env` as `TELEGRAM_BOT_TOKEN`
+
+### 2. Get your chat ID
+
+1. Send any message to your new bot (e.g. `merhaba`)
+2. Open in a browser (replace `TOKEN`):
+
+```
+https://api.telegram.org/botTOKEN/getUpdates
+```
+
+3. Find `"chat":{"id":123456789}` → `.env` as `TELEGRAM_CHAT_ID`
+
+### 3. Configure `.env`
+
+```env
+TELEGRAM_BOT_TOKEN=123456:ABC...
+TELEGRAM_CHAT_ID=123456789
+```
+
+### 4. Test
+
+```powershell
+python scripts/test_telegram.py
+```
+
+### 5. Pipeline notifications
+
+When both variables are set, `main.py` and `run_scheduled.bat` send:
+
+- **Success:** topic, SEO title, YouTube URL, privacy
+- **Failure:** error summary
+
+Skip notifications:
+
+```powershell
+python main.py --no-notify
+```
+
+If Telegram is not configured, the pipeline runs normally with no errors.
 
 ## Workflow
 
